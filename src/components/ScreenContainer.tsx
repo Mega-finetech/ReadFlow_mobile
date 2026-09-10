@@ -1,5 +1,6 @@
 import React from 'react';
-import { Platform, SafeAreaView, StyleSheet, View, ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 
 interface ScreenContainerProps {
@@ -11,15 +12,16 @@ interface ScreenContainerProps {
 
 export function ScreenContainer({ children, style, useSafeArea = true }: ScreenContainerProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
-  if (Platform.OS === 'web' || !useSafeArea) {
-    return <View style={[styles.base, { backgroundColor: colors.background }, style]}>{children}</View>;
-  }
+  const safePadding: ViewStyle = useSafeArea && Platform.OS !== 'web'
+    ? { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }
+    : {};
 
   return (
-    <SafeAreaView style={[styles.base, { backgroundColor: colors.background }, style]}>
+    <View style={[styles.base, { backgroundColor: colors.background }, safePadding, style]}>
       {children}
-    </SafeAreaView>
+    </View>
   );
 }
 

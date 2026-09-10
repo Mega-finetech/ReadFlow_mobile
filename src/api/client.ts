@@ -6,7 +6,7 @@ import { getToken } from './tokenStore';
  * - iOS simulator / web: localhost works
  * - Physical device: use your machine's LAN IP
  */
-export const API_BASE_URL = 'http://192.168.209.86:3000';
+export const API_BASE_URL = 'http://192.168.0.199:3000';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -54,8 +54,11 @@ export async function apiRequest<T>(
       body: isForm ? formData : body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (err) {
+    const reason =
+      err instanceof Error ? err.message : err != null ? String(err) : 'unknown error';
+    console.error(`[apiRequest] fetch failed for ${path}:`, err);
     throw new ApiError(
-      `Network error: unable to reach ${API_BASE_URL}. Check that the backend is running.`,
+      `Network error: unable to reach ${API_BASE_URL}. Check that the backend is running. (Underlying error: ${reason})`,
       0
     );
   }

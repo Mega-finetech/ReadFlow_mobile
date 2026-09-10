@@ -6,7 +6,8 @@ import {
   Theme,
 } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider } from './src/auth/AuthContext';
+import { StyleSheet, View } from 'react-native';
+import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useTheme } from './src/theme';
 
@@ -22,6 +23,7 @@ export default function App() {
 
 function ThemedApp() {
   const { colors, isDark } = useTheme();
+  const { recordActivity } = useAuth();
 
   const navTheme: Theme = {
     ...(isDark ? DarkTheme : DefaultTheme),
@@ -37,9 +39,15 @@ function ThemedApp() {
   };
 
   return (
-    <NavigationContainer theme={navTheme}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <RootNavigator />
-    </NavigationContainer>
+    <View style={styles.root} onTouchStart={recordActivity}>
+      <NavigationContainer theme={navTheme} onStateChange={recordActivity}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <RootNavigator />
+      </NavigationContainer>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

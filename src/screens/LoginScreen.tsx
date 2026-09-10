@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Headphones } from 'lucide-react-native';
+
 import { AuthStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -46,10 +46,14 @@ export function LoginScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.top}>
-            <View style={[styles.logo, { backgroundColor: colors.primaryContainer }]}>
-              <Headphones size={32} color={colors.primary} />
+            <View style={styles.logoCircle}>
+              <Image
+                source={require('../../assets/readflow-icon.png')}
+                style={styles.logo}
+                resizeMode="cover"
+              />
             </View>
-            <Text style={[typography.display, { color: colors.onSurface }]}>ReadFlow</Text>
+            <Text style={[typography.display, { color: colors.onSurface, marginTop: spacing.xl }]}>ReadFlow</Text>
             <Text style={[typography.body, { color: colors.onSurfaceVariant, marginTop: spacing.sm }]}>
               Turn any document into narrated chapters.
             </Text>
@@ -110,13 +114,17 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, padding: 24, justifyContent: 'center' },
   top: { alignItems: 'center', marginBottom: 32 },
-  logo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  logoCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+  },
+  logo: {
+    width: 96,
+    height: 96,
   },
   card: {
     borderWidth: 1,
