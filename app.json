@@ -4,28 +4,27 @@
     "slug": "readflow",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/readflow-icon.png",
+    "icon": "./assets/readflow-iconb.png.png",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.adelani_samuel.readflow"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "package": "com.adelani_samuel.readflow",
+      "predictiveBackGestureEnabled": false
     },
     "extra": {
       "eas": {
         "projectId": "8b91f93e-cbd0-4098-befe-d90c3684dc6f"
       }
-    }
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
   }
 }

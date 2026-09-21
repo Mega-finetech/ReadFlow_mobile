@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
 import { apiRequest, ApiError } from './client';
 import { Document, Chapter } from '../types';
@@ -69,16 +70,13 @@ export async function uploadDocument(file: UploadPayload): Promise<Document> {
   if (Platform.OS === 'web') {
     // Web: fetch the URI into a real browser Blob/File so the multipart part
     // carries the original filename + MIME type (multer sees req.file).
-    const blob = await (await fetch(file.uri)).blob();
-    formData.append('file', new File([blob], file.name, { type: fileType }));
+     const blob = await (await fetch(file.uri)).blob();
+     formData.append('file', blob, file.name);
   } else {
-    // Native (Android/iOS): React Native's FormData accepts the
-    // { uri, name, type } file-object shorthand.
-    formData.append('file', {
-      uri: file.uri,
-      name: file.name,
-      type: fileType,
-    } as unknown as Blob);
+    // Native (Android/iOS): use Expo's File implementation,
+    // which implements Blob and is supported by the native FormData stack.
+    const nativeFile = new File(file.uri);
+    formData.append('file', nativeFile, file.name);
   }
 
   try {

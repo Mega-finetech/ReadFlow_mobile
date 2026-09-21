@@ -24,6 +24,13 @@ interface AuthContextValue {
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   recordActivity: () => void;
+  /**
+   * Persist an already-obtained session (token + user) and flip the app into
+   * the authenticated navigator. Used by the Register screen to play its
+   * success animation before navigation happens; signIn/signUp share the same
+   * internal path, so session/token behavior is identical.
+   */
+  commitSession: (token: string, user: User) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -53,21 +60,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastActivityRef.current = Date.now();
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const response = await loginApi(email, password);
-    await setToken(response.token);
-    setTokenState(response.token);
-    setUser(response.user);
+  const applySession = useCallback(async (authToken: string, sessionUser: User) => {
+    await setToken(authToken);
+    setTokenState(authToken);
+    setUser(sessionUser);
     lastActivityRef.current = Date.now();
   }, []);
 
+  const signIn = useCallback(async (email: string, password: string) => {
+    const response = await loginApi(email, password);
+    await applySession(response.token, response.user);
+  }, [applySession]);
+
   const signUp = useCallback(async (email: string, password: string) => {
     const response = await registerApi(email, password);
-    await setToken(response.token);
-    setTokenState(response.token);
-    setUser(response.user);
-    lastActivityRef.current = Date.now();
-  }, []);
+    await applySession(response.token, response.user);
+  }, [applySession]);
+
+  const commitSession = useCallback(
+    async (authToken: string, sessionUser: User) => {
+      await applySession(authToken, sessionUser);
+    },
+    [applySession]
+  );
 
   const signOut = useCallback(async () => {
     await clearToken();
@@ -109,8 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [authenticated, signOut]);
 
   const value = useMemo(
-    () => ({ user, token, isLoading, signIn, signUp, signOut, recordActivity }),
-    [user, token, isLoading, signIn, signUp, signOut, recordActivity]
+    () => ({ user, token, isLoading, signIn, signUp, signOut, recordActivity, commitSession }),
+    [user, token, isLoading, signIn, signUp, signOut, recordActivity, commitSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,42 +1,54 @@
 import React, { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { AuthStackParamList } from '../navigation/types';
-import { useTheme } from '../theme';
+import {
+  AUTH,
+  AuthButton,
+  AuthField,
+  AuthHeader,
+  AuthLink,
+  FONTS,
+} from '../components/auth/AuthUI';
 import { ScreenContainer } from '../components/ScreenContainer';
-import { TextField } from '../components/TextField';
-import { Button } from '../components/Button';
 import { useAuth } from '../auth/AuthContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
+interface FieldErrors {
+  email?: string;
+  password?: string;
+}
+
 export function LoginScreen({ navigation }: Props) {
-  const { colors, spacing, radius, typography } = useTheme();
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    setError(null);
-    if (!email || !password) {
-      setError('Please enter your email and password.');
-      return;
-    }
+    setApiError(null);
+    const errors: FieldErrors = {};
+    if (!email.trim()) errors.email = 'Email is required.';
+    if (!password) errors.password = 'Password is required.';
+    setFieldErrors(errors);
+    if (errors.email || errors.password) return;
+
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email.trim(), password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setApiError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer style={styles.screen}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -45,65 +57,50 @@ export function LoginScreen({ navigation }: Props) {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.top}>
-            <View style={styles.logoCircle}>
-              <Image
-                source={require('../../assets/readflow-icon.png')}
-                style={styles.logo}
-                resizeMode="cover"
-              />
-            </View>
-            <Text style={[typography.display, { color: colors.onSurface, marginTop: spacing.xl }]}>ReadFlow</Text>
-            <Text style={[typography.body, { color: colors.onSurfaceVariant, marginTop: spacing.sm }]}>
-              Turn any document into narrated chapters.
-            </Text>
+          <AuthHeader
+            title="Welcome back"
+            subtitle="Sign in to keep listening to your documents."
+          />
+
+          <View style={styles.form}>
+            <AuthField
+              label="Email"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+              }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              placeholder="you@example.com"
+              error={fieldErrors.email}
+            />
+            <AuthField
+              label="Password"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (fieldErrors.password) {
+                  setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                }
+              }}
+              secureTextEntry
+              placeholder="Your password"
+              error={fieldErrors.password}
+            />
+
+            {apiError ? <Text style={styles.apiError}>{apiError}</Text> : null}
+
+            <View style={styles.buttonGap} />
+            <AuthButton title="Sign in" onPress={handleLogin} loading={loading} />
           </View>
 
-          <View style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.xl, borderColor: colors.outline }]}>
-            <Text style={[typography.title, { color: colors.onSurface }]}>Welcome back</Text>
-
-            <View style={styles.field}>
-              <TextField
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                placeholder="you@example.com"
-              />
-            </View>
-            <View style={styles.field}>
-              <TextField
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholder="••••••••"
-              />
-            </View>
-
-            {error ? (
-              <Text style={[typography.caption, { color: colors.error, marginTop: spacing.sm }]}>
-                {error}
-              </Text>
-            ) : null}
-
-            <View style={styles.spacer} />
-            <Button title="Sign in" onPress={handleLogin} loading={loading} />
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={[typography.body, { color: colors.onSurfaceVariant }]}>
-              New to ReadFlow?
-            </Text>
-            <Text
-              style={[typography.bodyStrong, { color: colors.primary, marginLeft: spacing.xs }]}
-              onPress={() => navigation.navigate('Register')}
-            >
-              Create an account
-            </Text>
-          </View>
+          <AuthLink
+            prompt="New to ReadFlow?"
+            action="Create account"
+            onAction={() => navigation.navigate('Register')}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenContainer>
@@ -111,26 +108,29 @@ export function LoginScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  scroll: { flexGrow: 1, padding: 24, justifyContent: 'center' },
-  top: { alignItems: 'center', marginBottom: 32 },
-  logoCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    overflow: 'hidden',
-    alignItems: 'center',
+  screen: {
+    backgroundColor: AUTH.background,
+  },
+  flex: {
+    flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 24,
   },
-  logo: {
-    width: 96,
-    height: 96,
+  form: {
+    alignSelf: 'stretch',
+    gap: 18,
   },
-  card: {
-    borderWidth: 1,
-    padding: 24,
+  apiError: {
+    fontFamily: FONTS.regular,
+    fontSize: 13,
+    lineHeight: 17,
+    color: AUTH.error,
   },
-  field: { marginBottom: 16 },
-  spacer: { height: 24 },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
+  buttonGap: {
+    height: 6,
+  },
 });
